@@ -2,6 +2,7 @@ const https = require('https');
 
 function getLatestPushDateTime() {
     return new Promise((resolve, reject) => {
+        // TODO access_tokenをurlに載せるのはやめる
         const url = `https://api.github.com/users/${process.env.GITHUB_USER_NAME}/events?access_token=${process.env.GITHUB_ACCESS_TOKEN}`;
         https.get(
             url, {
@@ -32,7 +33,7 @@ function getLatestPushDateTime() {
 
 function shock() {
     return new Promise((resolve, reject) => {
-        const url = `https://pavlok-mvp.herokuapp.com/unlocked/remotes/${process.env.PAVLOK_ID}/zap/${process.env.PAVLOK_ZAP_STRENGTH}`;
+        const url = `https://pavlok-mvp.herokuapp.com/unlocked/remotes/${process.env.PAVLOK_ID}/zap/${process.env.PAVLOK_ZAP_STRENGTH}&message=Please%20git-push!`;
         https.get(
             url,
             (res) => {
@@ -40,7 +41,6 @@ function shock() {
             }
         );
     });
-
 }
 
 exports.handler = async(event) => {
