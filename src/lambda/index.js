@@ -2,12 +2,12 @@ const https = require('https');
 
 function getLatestPushDateTime() {
     return new Promise((resolve, reject) => {
-        // TODO access_tokenをurlに載せるのはやめる
-        const url = `https://api.github.com/users/${process.env.GITHUB_USER_NAME}/events?access_token=${process.env.GITHUB_ACCESS_TOKEN}`;
+        const url = `https://api.github.com/users/${process.env.GITHUB_USER_NAME}/events`;
         https.get(
             url, {
                 headers: {
-                    'User-Agent': 'git-shock'
+                    'User-Agent': 'git-shock',
+                    'Authorization': `token ${process.env.GITHUB_ACCESS_TOKEN}` 
                 }
             }, (res) => {
                 let body = '';
@@ -25,6 +25,7 @@ function getLatestPushDateTime() {
                             return;
                         }
                     };
+                    reject();
                 });
             });
     });
@@ -32,8 +33,8 @@ function getLatestPushDateTime() {
 }
 
 function shock() {
-    return new Promise((resolve, reject) => {
-        const url = `https://pavlok-mvp.herokuapp.com/unlocked/remotes/${process.env.PAVLOK_ID}/zap/${process.env.PAVLOK_ZAP_STRENGTH}&message=Please%20git-push!`;
+    return new Promise(resolve => {
+        const url = `https://pavlok-mvp.herokuapp.com/unlocked/remotes/${process.env.PAVLOK_ID}/zap/${process.env.PAVLOK_ZAP_STRENGTH}?message=Please%20git-push!`;
         https.get(
             url,
             (res) => {
@@ -43,15 +44,9 @@ function shock() {
     });
 }
 
-exports.handler = async(event) => {
-    const response = {
-        statusCode: 200
-    };
-
-    if (await getLatestPushDateTime() > Date.now() - 24 * 60 * 60 * 1000) {
+exports.handler = async() => {
+    if (await getLatestPushDateTime() > Date.now() - 36 * 60 * 60 * 1000) {
         return { statusCode: 200, body: 'no-shock' };
     }
-
-    return { statusCode: 200, body: response.body = await shock() };
+    return { statusCode: 200, body: await shock() };
 };
-

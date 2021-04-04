@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  GithubAccessToken:
+    Type: String
+  GithubUserName:
+    Type: String
+  PavlokId:
+    Type: String
+  PavlokZapStrength:
+    Type: String
+Resources:
+  Rule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: everyday
+      ScheduleExpression: cron(0 * * * ? *)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt Lambda.Arn
+          Id: lambda
+  Lambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code: src/lambda/
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: nodejs14.x
+      Handler: index.handler
+      Environment: 
+        Variables:
+          GITHUB_ACCESS_TOKEN: !Ref GithubAccessToken
+          GITHUB_USER_NAME: !Ref GithubUserName
+          PAVLOK_ID: !Ref PavlokId
+          PAVLOK_ZAP_STRENGTH: !Ref PavlokZapStrength
+  LambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LambdaRolePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource:
+                  - '*'
+  LambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref Lambda
+      Principal: events.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !GetAtt Rule.Arn
+
